@@ -12,7 +12,7 @@ import (
 
 	"github.com/ARF-DEV/rpg-go/engine"
 	"github.com/ARF-DEV/rpg-go/game"
-	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/gl/v4.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -66,12 +66,15 @@ func main() {
 	shader.SetInt("texture0", 0)
 	gl.UseProgram(0)
 
+	engine.InputEvent.Init()
+
 	platform := game.Game{}
-	platform.Start()
+	platform.Start(&engine.InputEvent)
 	for !window.ShouldClose() {
-		platform.Update(window)
+		platform.Update(window, &engine.InputEvent)
 
 		platform.Draw(window, &sr, &shader)
 	}
 
+	// window.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {})
 }

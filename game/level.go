@@ -10,17 +10,13 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type Player struct {
-	Posiiton mgl32.Vec2
-}
-
-func (p *Player) Draw() {
-
-}
-
 type Level struct {
-	Map          [][]engine.TileType
+	Map          [][]engine.Tile
 	textureAtlas *engine.Texture
+}
+
+func (l *Level) GetTIle(x, y int) engine.Tile {
+	return l.Map[y][x]
 }
 
 func (l *Level) Draw(renderer *engine.SpriteRenderer, shader *engine.Shader) {
@@ -32,7 +28,7 @@ func (l *Level) Draw(renderer *engine.SpriteRenderer, shader *engine.Shader) {
 	r := rand.New(rand.NewSource(1))
 	for y, tileLine := range l.Map {
 		for x, tile := range tileLine {
-			if tile != engine.Blank {
+			if tile.Type != engine.Blank {
 				src := engine.GetTextureIndex()[tile]
 				// fmt.Println(src, tile)
 				idx := r.Intn(len(src))
@@ -64,23 +60,28 @@ func LoadLevelFromFile(path string, player *Player, texAtlas *engine.Texture) (L
 	}
 
 	var level Level
-	var t engine.TileType
+	var t engine.Tile
 	for y, line := range levelLines {
-		var tiles []engine.TileType
+		var tiles []engine.Tile
 		for x, r := range line {
 			switch r {
 			case '\n', '\r', ' ', '\t':
-				t = engine.Blank
+				t.Type = engine.Blank
+				t.IsWalkable = true
 			case '#':
-				t = engine.StoneWall
+				t.Type = engine.StoneWall
+				t.IsWalkable = false
 			case '|':
-				t = engine.Door
+				t.Type = engine.Door
+				t.IsWalkable = false
 			case '.':
-				t = engine.SandFloor
+				t.Type = engine.SandFloor
+				t.IsWalkable = true
 			case 'p':
-				t = engine.SandFloor
-				player.Posiiton[0] = float32(x)
-				player.Posiiton[1] = float32(y)
+				t.Type = engine.SandFloor
+				t.IsWalkable = true
+				player.Position[0] = float32(x)
+				player.Position[1] = float32(y)
 				// set player pos
 			default:
 				return Level{}, fmt.Errorf("error: case for atlas index %c is not yet set for ", r)
@@ -90,7 +91,10 @@ func LoadLevelFromFile(path string, player *Player, texAtlas *engine.Texture) (L
 
 		if len(line) < longestWidth {
 			for i := 0; i < longestWidth-len(line); i++ {
-				tiles = append(tiles, engine.Blank)
+				tiles = append(tiles, engine.Tile{
+					Type:       engine.Blank,
+					IsWalkable: true,
+				})
 			}
 		}
 		level.Map = append(level.Map, tiles)

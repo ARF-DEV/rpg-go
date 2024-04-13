@@ -10,13 +10,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
-	"github.com/go-gl/mathgl/mgl32"
 )
 
 type TileType string
 
-var textureIndex map[TileType][]image.Rectangle
+var textureIndex map[Tile][]image.Rectangle
 
 const (
 	Blank     TileType = " " // 00000000
@@ -28,12 +26,12 @@ const (
 )
 
 type Tile struct {
-	Pos        mgl32.Vec2
+	// Pos        mgl32.Vec2
 	IsWalkable bool
 	Type       TileType
 }
 
-func GetTextureIndex() map[TileType][]image.Rectangle {
+func GetTextureIndex() map[Tile][]image.Rectangle {
 	return textureIndex
 }
 
@@ -53,7 +51,7 @@ func InitTextureIndex(file string, texture *Texture) error {
 	// }
 	img := texture.TexBound
 
-	textureIndex = map[TileType][]image.Rectangle{}
+	textureIndex = map[Tile][]image.Rectangle{}
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -92,7 +90,16 @@ func InitTextureIndex(file string, texture *Texture) error {
 			}
 			texCoords = append(texCoords, image.Rect(x, y, x+int(TILE_SIZE), y+int(TILE_SIZE)))
 		}
-		textureIndex[TileType(identifiers)] = texCoords
+		t := Tile{}
+		t.Type = TileType(identifiers)
+		switch t.Type {
+		case SandFloor, Blank:
+			t.IsWalkable = true
+		default:
+			t.IsWalkable = false
+		}
+
+		textureIndex[t] = texCoords
 	}
 	fmt.Println(textureIndex)
 	return nil

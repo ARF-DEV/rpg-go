@@ -1,0 +1,48 @@
+package engine
+
+import (
+	"github.com/go-gl/glfw/v3.3/glfw"
+)
+
+type KeyCallbackListener interface {
+	UpdateOnInput(in *Input)
+}
+
+type Input struct {
+	Keys [1024]bool
+	// TODO mouse event
+	singleEventSubs []KeyCallbackListener
+}
+
+var InputEvent Input = Input{}
+
+func (e *Input) keycallback(window *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mode glfw.ModifierKey) {
+	if key == glfw.KeyEscape && action == glfw.Press {
+		window.SetShouldClose(true)
+	}
+
+	if key >= 0 && key < 1024 {
+		if action == glfw.Press {
+			e.Keys[key] = true
+		}
+		if action == glfw.Release {
+			e.Keys[key] = false
+		}
+	}
+
+	for _, sub := range e.singleEventSubs {
+		sub.UpdateOnInput(e)
+	}
+}
+
+func (e *Input) Init() {
+	glfw.GetCurrentContext().SetKeyCallback(glfw.KeyCallback(e.keycallback))
+}
+
+func (s *Input) AddSubcsriber(sub KeyCallbackListener) {
+	s.singleEventSubs = append(s.singleEventSubs, sub)
+}
+
+// func (e *Input) HandleEvent() {
+// 	glfw.PollEvents()
+// }
