@@ -41,6 +41,9 @@ func CreateShader(vertexPath string, fragmentPath string) (Shader, error) {
 func (s *Shader) Use() {
 	gl.UseProgram(uint32(s.ID))
 }
+func (s *Shader) Unuse() {
+	gl.UseProgram(uint32(0))
+}
 
 func (s *Shader) SetUniform4f(name string, x, y, z, w float32) {
 	uniformLocation := gl.GetUniformLocation(uint32(s.ID), gl.Str(fmt.Sprint(name, "\x00")))

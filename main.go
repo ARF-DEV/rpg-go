@@ -30,13 +30,14 @@ func glfwInit() {
 const WIDTH = 800
 const HEIGHT = 600
 
-func glClearError() {
-	for gl.GetError() != gl.NO_ERROR {
-	}
-}
-func glCheckError() {
-	log.Printf("ERROR: %v", gl.GetError())
-}
+//	func glClearError() {
+//		for gl.GetError() != gl.NO_ERROR {
+//		}
+//	}
+//
+//	func glCheckError() {
+//		log.Printf("ERROR: %v", gl.GetError())
+//	}
 func main() {
 	glfwInit()
 	defer glfw.Terminate()
@@ -67,7 +68,6 @@ func main() {
 	gl.UseProgram(0)
 
 	engine.InputEvent.Init()
-
 	platform := game.Game{}
 	platform.Start(&engine.InputEvent)
 	for !window.ShouldClose() {

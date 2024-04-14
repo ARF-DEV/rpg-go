@@ -15,8 +15,8 @@ type Level struct {
 	textureAtlas *engine.Texture
 }
 
-func (l *Level) GetTIle(x, y int) engine.Tile {
-	return l.Map[y][x]
+func (l *Level) GetTile(x, y int) *engine.Tile {
+	return &l.Map[y][x]
 }
 
 func (l *Level) Draw(renderer *engine.SpriteRenderer, shader *engine.Shader) {
@@ -28,7 +28,7 @@ func (l *Level) Draw(renderer *engine.SpriteRenderer, shader *engine.Shader) {
 	r := rand.New(rand.NewSource(1))
 	for y, tileLine := range l.Map {
 		for x, tile := range tileLine {
-			if tile.Type != engine.Blank {
+			if tile != engine.Blank {
 				src := engine.GetTextureIndex()[tile]
 				// fmt.Println(src, tile)
 				idx := r.Intn(len(src))
@@ -66,20 +66,17 @@ func LoadLevelFromFile(path string, player *Player, texAtlas *engine.Texture) (L
 		for x, r := range line {
 			switch r {
 			case '\n', '\r', ' ', '\t':
-				t.Type = engine.Blank
-				t.IsWalkable = true
+				t = engine.Blank
 			case '#':
-				t.Type = engine.StoneWall
-				t.IsWalkable = false
+				t = engine.StoneWall
 			case '|':
-				t.Type = engine.Door
-				t.IsWalkable = false
+				t = engine.ClosedDoor
+			case '/':
+				t = engine.OpenDoor
 			case '.':
-				t.Type = engine.SandFloor
-				t.IsWalkable = true
+				t = engine.SandFloor
 			case 'p':
-				t.Type = engine.SandFloor
-				t.IsWalkable = true
+				t = engine.SandFloor
 				player.Position[0] = float32(x)
 				player.Position[1] = float32(y)
 				// set player pos
@@ -91,10 +88,7 @@ func LoadLevelFromFile(path string, player *Player, texAtlas *engine.Texture) (L
 
 		if len(line) < longestWidth {
 			for i := 0; i < longestWidth-len(line); i++ {
-				tiles = append(tiles, engine.Tile{
-					Type:       engine.Blank,
-					IsWalkable: true,
-				})
+				tiles = append(tiles, engine.Blank)
 			}
 		}
 		level.Map = append(level.Map, tiles)

@@ -9,7 +9,8 @@ type KeyCallbackListener interface {
 }
 
 type Input struct {
-	Keys [1024]bool
+	Keys     [1024]bool
+	PrevKeys [1024]bool
 	// TODO mouse event
 	singleEventSubs []KeyCallbackListener
 }
@@ -21,6 +22,8 @@ func (e *Input) keycallback(window *glfw.Window, key glfw.Key, scancode int, act
 		window.SetShouldClose(true)
 	}
 
+	// fmt.Println("owkaodka")
+	e.PrevKeys = e.Keys
 	if key >= 0 && key < 1024 {
 		if action == glfw.Press {
 			e.Keys[key] = true

@@ -12,24 +12,47 @@ import (
 	"strings"
 )
 
-type TileType string
+type Tile string
+
+func (t Tile) CanWalk() bool {
+	switch t {
+	case Blank, StoneWall, ClosedDoor:
+		return false
+	case SandFloor, OpenDoor:
+		return true
+	}
+	return false
+}
+
+func (t Tile) IsInteractable() bool {
+	switch t {
+	case ClosedDoor, OpenDoor:
+		return true
+	}
+	return false
+}
+
+func (t *Tile) Interact() {
+	switch *t {
+	case ClosedDoor:
+		*t = OpenDoor
+	case OpenDoor:
+		*t = ClosedDoor
+	}
+	fmt.Println(*t)
+}
 
 var textureIndex map[Tile][]image.Rectangle
 
 const (
-	Blank     TileType = " " // 00000000
-	StoneWall TileType = "#" // 00000010
-	Door      TileType = "|" // 00000100
-	SandFloor TileType = "." // 00001000
+	Blank      Tile = " "
+	StoneWall  Tile = "#"
+	OpenDoor   Tile = "/"
+	ClosedDoor Tile = "|"
+	SandFloor  Tile = "."
 
 	TILE_SIZE uint32 = 32
 )
-
-type Tile struct {
-	// Pos        mgl32.Vec2
-	IsWalkable bool
-	Type       TileType
-}
 
 func GetTextureIndex() map[Tile][]image.Rectangle {
 	return textureIndex
@@ -90,14 +113,7 @@ func InitTextureIndex(file string, texture *Texture) error {
 			}
 			texCoords = append(texCoords, image.Rect(x, y, x+int(TILE_SIZE), y+int(TILE_SIZE)))
 		}
-		t := Tile{}
-		t.Type = TileType(identifiers)
-		switch t.Type {
-		case SandFloor, Blank:
-			t.IsWalkable = true
-		default:
-			t.IsWalkable = false
-		}
+		t := Tile(identifiers)
 
 		textureIndex[t] = texCoords
 	}

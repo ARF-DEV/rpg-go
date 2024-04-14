@@ -5,6 +5,12 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
+var (
+	COLOR_BLACK mgl32.Vec4 = mgl32.Vec4{0, 0, 0, 1}
+	COLOR_WHITE mgl32.Vec4 = mgl32.Vec4{1, 1, 1, 1}
+	COLOR_GREEN mgl32.Vec4 = mgl32.Vec4{0, 1, 0, 1}
+)
+
 type SpriteRenderer struct {
 	quadVAO uint32
 }
@@ -78,16 +84,36 @@ func (r *SpriteRenderer) Draw(
 		srcSize[1] /= float32(texture.TexBound.Dy())
 	}
 
+	shader.Use()
 	shader.SetMatrix4f("model", model)
 	shader.SetVector4f("color", color)
 	shader.SetVector2f("texOffset", srcPos)
 	shader.SetVector2f("texSize", srcSize)
+	shader.SetInt("debug", 0)
 
 	gl.BindVertexArray(r.quadVAO)
-	shader.Use()
 	texture.Bind()
 
 	gl.DrawElementsWithOffset(gl.TRIANGLES, 6, gl.UNSIGNED_INT, 0)
 
+	gl.BindVertexArray(0)
 	texture.UnBind()
+	shader.Unuse()
+}
+
+func (r *SpriteRenderer) DebugDraw(shader *Shader, x, y float32, sizeX, sizeY float32, color mgl32.Vec4) {
+	translate := mgl32.Translate3D(x-sizeX/2, y-sizeY/2, 1)
+	scale := mgl32.Scale3D(sizeX, sizeY, 1)
+	model := translate.Mul4(scale)
+
+	shader.Use()
+	shader.SetMatrix4f("model", model)
+	shader.SetInt("debug", 1)
+	shader.SetVector4f("color", color)
+
+	gl.BindVertexArray(r.quadVAO)
+	gl.DrawElementsWithOffset(gl.TRIANGLES, 6, gl.UNSIGNED_INT, 0)
+
+	gl.BindVertexArray(0)
+	shader.Unuse()
 }
