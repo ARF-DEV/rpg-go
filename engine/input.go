@@ -4,7 +4,7 @@ import (
 	"github.com/go-gl/glfw/v3.3/glfw"
 )
 
-type KeyCallbackListener interface {
+type InputEventListener interface {
 	UpdateOnInput(in *Input)
 }
 
@@ -12,7 +12,7 @@ type Input struct {
 	Keys     [1024]bool
 	PrevKeys [1024]bool
 	// TODO mouse event
-	singleEventSubs []KeyCallbackListener
+	singleEventSubs []InputEventListener
 }
 
 var InputEvent Input = Input{}
@@ -42,7 +42,7 @@ func (e *Input) Init() {
 	glfw.GetCurrentContext().SetKeyCallback(glfw.KeyCallback(e.keycallback))
 }
 
-func (s *Input) AddSubcsriber(sub KeyCallbackListener) {
+func (s *Input) AddSubcsriber(sub InputEventListener) {
 	s.singleEventSubs = append(s.singleEventSubs, sub)
 }
 

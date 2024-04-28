@@ -1,6 +1,6 @@
 package engine
 
-type Camera interface {
-	GetProjectionMat()
-	GetViewMat()
-}
+// type Camera interface {
+// 	GetProjectionMat()
+// 	GetViewMat()
+// }

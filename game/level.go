@@ -34,7 +34,7 @@ func (l *Level) Draw(renderer *engine.SpriteRenderer, shader *engine.Shader) {
 				idx := r.Intn(len(src))
 				srcPos := mgl32.Vec2{float32(src[idx].Min.X), float32(src[idx].Min.Y)}
 				srcSize := mgl32.Vec2{float32(engine.TILE_SIZE), float32(engine.TILE_SIZE)}
-				renderer.Draw(shader, texture, srcPos, srcSize, mgl32.Vec2{float32(x * 32), float32(y * 32)}, mgl32.Vec2{32, 32}, 0, mgl32.Vec4{1, 1, 1, 1})
+				renderer.Draw(shader, texture, srcPos, srcSize, mgl32.Vec2{float32((int(cam[0]) + x) * 32), float32((int(cam[1]) + y) * 32)}, mgl32.Vec2{32, 32}, 0, mgl32.Vec4{1, 1, 1, 1})
 			}
 		}
 	}

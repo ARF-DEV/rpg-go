@@ -27,8 +27,8 @@ func glfwInit() {
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 }
 
-const WIDTH = 800
-const HEIGHT = 600
+// const WIDTH = 800
+// const HEIGHT = 600
 
 //	func glClearError() {
 //		for gl.GetError() != gl.NO_ERROR {
@@ -42,7 +42,7 @@ func main() {
 	glfwInit()
 	defer glfw.Terminate()
 
-	window, err := glfw.CreateWindow(WIDTH, HEIGHT, "Hello World", nil, nil)
+	window, err := glfw.CreateWindow(game.WIDTH, game.HEIGHT, "Hello World", nil, nil)
 	if err != nil {
 		log.Println("failed to create window")
 		panic(err)
@@ -53,7 +53,7 @@ func main() {
 		log.Println("failed to init gl")
 		panic(err)
 	}
-	gl.Viewport(0, 0, WIDTH, HEIGHT)
+	gl.Viewport(0, 0, game.WIDTH, game.HEIGHT)
 
 	sr := engine.CreateSpriteRenderer()
 	shader, err := engine.CreateShader("assets/vertex.glsl", "assets/fragment.glsl")
@@ -62,18 +62,17 @@ func main() {
 	}
 
 	shader.Use()
-	ortho := mgl32.Ortho(0, WIDTH, HEIGHT, 0, -1, 1)
+	ortho := mgl32.Ortho(0, game.WIDTH, game.HEIGHT, 0, -1, 1)
 	shader.SetMatrix4f("projection", ortho)
 	shader.SetInt("texture0", 0)
 	gl.UseProgram(0)
 
 	engine.InputEvent.Init()
-	platform := game.Game{}
-	platform.Start(&engine.InputEvent)
+	gameInstance := game.Game{}
+	gameInstance.Start(&engine.InputEvent)
 	for !window.ShouldClose() {
-		platform.Update(window, &engine.InputEvent)
-
-		platform.Draw(window, &sr, &shader)
+		gameInstance.Update(window, &engine.InputEvent)
+		gameInstance.Draw(window, &sr, &shader)
 	}
 
 	// window.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {})

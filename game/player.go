@@ -23,8 +23,10 @@ func CreatePlayer(pos mgl32.Vec2, tex *engine.Texture) Player {
 
 func (p *Player) Draw(sr *engine.SpriteRenderer, shader *engine.Shader) {
 	front := p.Position.Add(p.prevDir).Mul(32).Add(mgl32.Vec2{16, 16})
-	sr.Draw(shader, p.tex, mgl32.Vec2{21 * 32, 59 * 32}, mgl32.Vec2{32, 32}, p.Position.Mul(32), mgl32.Vec2{32, 32}, 0, mgl32.Vec4{1, 1, 1, 1})
-	sr.DebugDraw(shader, front[0], front[1], 10, 10, engine.COLOR_WHITE)
+	sr.Draw(shader, p.tex, mgl32.Vec2{21 * 32, 59 * 32}, mgl32.Vec2{32, 32}, p.Position.Add(mgl32.Vec2(cam)).Mul(32), mgl32.Vec2{32, 32}, 0, mgl32.Vec4{1, 1, 1, 1})
+
+	camOffsetPix := mgl32.Vec2(cam).Mul(32)
+	sr.DebugDraw(shader, camOffsetPix[0]+front[0], camOffsetPix[1]+front[1], 10, 10, engine.COLOR_WHITE)
 }
 
 func (p *Player) Update(in *engine.Input) {
