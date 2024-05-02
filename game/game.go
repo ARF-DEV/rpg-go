@@ -1,8 +1,6 @@
 package game
 
 import (
-	"fmt"
-
 	"github.com/ARF-DEV/rpg-go/engine"
 	"github.com/go-gl/gl/v4.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -15,9 +13,27 @@ const HEIGHT = 600
 type camera mgl32.Vec2
 
 func (c *camera) MoveTo(pos mgl32.Vec2) {
-	fmt.Println(c.GetCenter(), pos)
 	vecDiff := pos.Sub(c.GetCenter())
-	*c = camera(mgl32.Vec2(*c).Add(vecDiff).Mul(-1))
+	*c = camera(mgl32.Vec2(*c).Add(vecDiff))
+}
+
+func (c *camera) Update(p *Player) {
+	camCenter := c.GetCenter()
+	tileDiff := camCenter.Sub(p.Position)
+	if int64(mgl32.Abs(tileDiff[0])) > 3 {
+		if tileDiff[0] > 0 {
+			cam.MoveTo(camCenter.Add(mgl32.Vec2{-1, 0}))
+		} else {
+			cam.MoveTo(camCenter.Add(mgl32.Vec2{1, 0}))
+		}
+	}
+	if int64(mgl32.Abs(tileDiff[1])) > 3 {
+		if tileDiff[1] > 0 {
+			cam.MoveTo(camCenter.Add(mgl32.Vec2{0, -1}))
+		} else {
+			cam.MoveTo(camCenter.Add(mgl32.Vec2{0, 1}))
+		}
+	}
 }
 
 // return coordinates in tile space
@@ -49,8 +65,9 @@ func (g *Game) loadTexture(key, path string) error {
 func (g *Game) Update(window *glfw.Window, in *engine.Input) {
 	glfw.PollEvents()
 	g.Player.Update(in)
-	cam.MoveTo(g.Player.Position)
+	// cam.MoveTo(g.Player.Position)
 	// fmt.Println(cam)
+	cam.Update(&g.Player)
 }
 
 func (g *Game) UpdateOnInput(in *engine.Input) {
@@ -83,13 +100,13 @@ func (g *Game) Start(in *engine.Input) {
 	}
 	in.AddSubcsriber(g)
 
-	fmt.Println(g.Player.Position)
 }
 
 func (g *Game) Draw(window *glfw.Window, sr *engine.SpriteRenderer, shader *engine.Shader) {
-	// fmt.Println(g.Player.Posiiton)
 	g.CurrentLevel.Draw(sr, shader)
 	g.Player.Draw(sr, shader)
+	sr.DebugDraw(shader, float32(WIDTH/2)-16, float32(HEIGHT/2)-16, 16, 16, engine.COLOR_BLACK)
+
 	window.SwapBuffers()
 
 	gl.ClearColor(0.2, 0.5, 0.1, 1)
