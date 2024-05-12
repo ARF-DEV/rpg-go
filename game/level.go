@@ -5,21 +5,27 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"time"
 
 	"github.com/ARF-DEV/rpg-go/engine"
 	"github.com/go-gl/mathgl/mgl32"
 )
 
+type Pos struct {
+	X, Y int32
+}
+
 type Level struct {
 	Map          [][]engine.Tile
 	textureAtlas *engine.Texture
+	DebugMap     map[Pos]bool
 }
 
 func (l *Level) GetTile(x, y int) *engine.Tile {
 	return &l.Map[y][x]
 }
 
-func (l *Level) Draw(renderer *engine.SpriteRenderer, shader *engine.Shader) {
+func (l *Level) Draw(renderer engine.Renderer, shader *engine.Shader) {
 	texture := l.textureAtlas
 	if l.textureAtlas == nil {
 		panic(fmt.Errorf("error texture atlas not set"))
@@ -93,6 +99,59 @@ func LoadLevelFromFile(path string, player *Player, texAtlas *engine.Texture) (L
 		level.Map = append(level.Map, tiles)
 	}
 	level.textureAtlas = texAtlas
-
+	level.DebugMap = map[Pos]bool{}
 	return level, nil
+}
+
+func bfs(shader *engine.Shader, sr engine.Renderer, level *Level, startPos Pos) {
+	bfsQ := Queue[Pos]{}
+	visitedMap := map[Pos]bool{}
+	bfsQ.Put(startPos)
+	for bfsQ.Len() > 0 {
+		// fmt.Println(bfsQ.Len())
+		curPos := bfsQ.Pop()
+		visitedMap[curPos] = true
+		// fmt.Println(bfsQ.Len())
+		sr.Bind()
+		sr.DebugDraw(shader, float32(engine.TILE_SIZE*uint32(curPos.X)), float32(engine.TILE_SIZE*uint32(curPos.Y)), float32(engine.TILE_SIZE), float32(engine.TILE_SIZE), mgl32.Vec4{1, 0, 0, 1})
+		sr.UnBind()
+		sr.Present()
+		// sr.CopyDraw(, shader)
+		// glfw.GetCurrentContext().SwapBuffers()
+		time.Sleep(time.Millisecond * 50)
+		for _, neighbour := range getNeighbors(curPos, level) {
+			if !visitedMap[neighbour] {
+				bfsQ.Put(neighbour)
+				level.DebugMap[Pos{neighbour.X, neighbour.Y}] = true
+			}
+		}
+
+	}
+	fmt.Println("DONE")
+
+}
+
+func getNeighbors(curPos Pos, level *Level) []Pos {
+	neighbours := []Pos{}
+	left := Pos{curPos.X - 1, curPos.Y}
+	right := Pos{curPos.X + 1, curPos.Y}
+	up := Pos{curPos.X, curPos.Y - 1}
+	down := Pos{curPos.X, curPos.Y + 1}
+
+	if level.GetTile(int(left.X), int(left.Y)).CanWalk() {
+		neighbours = append(neighbours, left)
+
+	}
+	if level.GetTile(int(right.X), int(right.Y)).CanWalk() {
+		neighbours = append(neighbours, right)
+	}
+
+	if level.GetTile(int(up.X), int(up.Y)).CanWalk() {
+		neighbours = append(neighbours, up)
+	}
+	if level.GetTile(int(down.X), int(down.Y)).CanWalk() {
+		neighbours = append(neighbours, down)
+	}
+
+	return neighbours
 }

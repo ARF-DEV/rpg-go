@@ -64,7 +64,7 @@ func (g *Game) loadTexture(key, path string) error {
 
 func (g *Game) Update(window *glfw.Window, in *engine.Input) {
 	glfw.PollEvents()
-	g.Player.Update(in)
+	g.Player.Update(in, &g.CurrentLevel)
 	// cam.MoveTo(g.Player.Position)
 	// fmt.Println(cam)
 	cam.Update(&g.Player)
@@ -72,6 +72,7 @@ func (g *Game) Update(window *glfw.Window, in *engine.Input) {
 
 func (g *Game) UpdateOnInput(in *engine.Input) {
 	g.Player.UpdateOnInput(in, &g.CurrentLevel)
+
 }
 
 func (g *Game) init() {
@@ -100,14 +101,24 @@ func (g *Game) Start(in *engine.Input) {
 	}
 	in.AddSubcsriber(g)
 
+	// gl.DrawBuffer(gl.FRONT)
+
 }
 
-func (g *Game) Draw(window *glfw.Window, sr *engine.SpriteRenderer, shader *engine.Shader) {
+func (g *Game) Draw(window *glfw.Window, sr engine.Renderer, shader *engine.Shader) {
+	sr.Bind()
 	g.CurrentLevel.Draw(sr, shader)
 	g.Player.Draw(sr, shader)
 	sr.DebugDraw(shader, float32(WIDTH/2)-16, float32(HEIGHT/2)-16, 16, 16, engine.COLOR_BLACK)
+	sr.UnBind()
+	// gl.DrawBuffer(gl.BACK)
+	// bfs(shader, sr, &g.CurrentLevel, Pos{int32(g.Player.Position[0]), int32(g.Player.Position[1])})
 
-	window.SwapBuffers()
+	sr.Present()
+	if err := gl.GetError(); err != 0 {
+		panic(err)
+	}
+	// window.SwapBuffers()
 
 	gl.ClearColor(0.2, 0.5, 0.1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)

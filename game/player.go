@@ -12,6 +12,7 @@ type Player struct {
 	Position mgl32.Vec2
 	tex      *engine.Texture
 	prevDir  mgl32.Vec2
+	Search   bool
 }
 
 func CreatePlayer(pos mgl32.Vec2, tex *engine.Texture) Player {
@@ -21,7 +22,7 @@ func CreatePlayer(pos mgl32.Vec2, tex *engine.Texture) Player {
 	}
 }
 
-func (p *Player) Draw(sr *engine.SpriteRenderer, shader *engine.Shader) {
+func (p *Player) Draw(sr engine.Renderer, shader *engine.Shader) {
 	front := p.Position.Add(p.prevDir).Mul(32).Add(mgl32.Vec2{16, 16})
 	sr.Draw(shader, p.tex, mgl32.Vec2{21 * 32, 59 * 32}, mgl32.Vec2{32, 32}, p.Position.Sub(mgl32.Vec2(cam)).Mul(32), mgl32.Vec2{32, 32}, 0, mgl32.Vec4{1, 1, 1, 1})
 
@@ -30,9 +31,10 @@ func (p *Player) Draw(sr *engine.SpriteRenderer, shader *engine.Shader) {
 
 }
 
-func (p *Player) Update(in *engine.Input) {
+func (p *Player) Update(in *engine.Input, lvl *Level) {
 }
 
+// NOTE: make a global shader map
 func (p *Player) UpdateOnInput(in *engine.Input, lvl *Level) {
 	proposedPos := p.Position
 	if in.Keys[glfw.KeyA] && !in.PrevKeys[glfw.KeyA] {
@@ -57,6 +59,12 @@ func (p *Player) UpdateOnInput(in *engine.Input, lvl *Level) {
 	}
 	if proposedPos != p.Position {
 		p.moveTo(lvl, proposedPos)
+	}
+	if in.Keys[glfw.KeyG] && !in.PrevKeys[glfw.KeyG] {
+		p.Search = true
+
+		shader, _ := engine.ShaderMap["defaultShader"]
+		bfs(&shader, &engine.DebugSpriteRenderer, lvl, Pos{int32(p.Position[0]), int32(p.Position[1])})
 	}
 }
 

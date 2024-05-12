@@ -9,6 +9,8 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
+var ShaderMap map[string]Shader = map[string]Shader{}
+
 type shaderID uint32
 type programID uint32
 
@@ -16,7 +18,7 @@ type Shader struct {
 	ID programID
 }
 
-func CreateShader(vertexPath string, fragmentPath string) (Shader, error) {
+func CreateShader(vertexPath string, fragmentPath string, identifier string) (Shader, error) {
 	vShader, err := loadShader(vertexPath, gl.VERTEX_SHADER)
 	if err != nil {
 		return Shader{}, fmt.Errorf("error when loading vertex shader: %w", err)
@@ -33,9 +35,13 @@ func CreateShader(vertexPath string, fragmentPath string) (Shader, error) {
 		return Shader{}, err
 	}
 
-	return Shader{
+	shader := Shader{
 		ID: id,
-	}, nil
+	}
+	// TODO: check if identifier already occupy
+	ShaderMap[identifier] = shader
+	return shader, nil
+
 }
 
 func (s *Shader) Use() {
