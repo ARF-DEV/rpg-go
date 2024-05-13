@@ -107,19 +107,12 @@ func (g *Game) Start(in *engine.Input) {
 
 func (g *Game) Draw(window *glfw.Window, sr engine.Renderer, shader *engine.Shader) {
 	sr.Bind()
+	sr.Clear()
 	g.CurrentLevel.Draw(sr, shader)
-	g.Player.Draw(sr, shader)
+	g.Player.Draw(sr, shader, &g.CurrentLevel)
 	sr.DebugDraw(shader, float32(WIDTH/2)-16, float32(HEIGHT/2)-16, 16, 16, engine.COLOR_BLACK)
 	sr.UnBind()
-	// gl.DrawBuffer(gl.BACK)
-	// bfs(shader, sr, &g.CurrentLevel, Pos{int32(g.Player.Position[0]), int32(g.Player.Position[1])})
-
 	sr.Present()
-	if err := gl.GetError(); err != 0 {
-		panic(err)
-	}
-	// window.SwapBuffers()
 
-	gl.ClearColor(0.2, 0.5, 0.1, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
+	window.SwapBuffers()
 }

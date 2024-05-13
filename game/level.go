@@ -112,17 +112,19 @@ func bfs(shader *engine.Shader, sr engine.Renderer, level *Level, startPos Pos) 
 		curPos := bfsQ.Pop()
 		visitedMap[curPos] = true
 		// fmt.Println(bfsQ.Len())
-		sr.Bind()
+		// sr.Bind()
 		sr.DebugDraw(shader, float32(engine.TILE_SIZE*uint32(curPos.X)), float32(engine.TILE_SIZE*uint32(curPos.Y)), float32(engine.TILE_SIZE), float32(engine.TILE_SIZE), mgl32.Vec4{1, 0, 0, 1})
-		sr.UnBind()
-		sr.Present()
+		// sr.UnBind()
+		// sr.Clear()
+		// sr.Present()
+
 		// sr.CopyDraw(, shader)
 		// glfw.GetCurrentContext().SwapBuffers()
 		time.Sleep(time.Millisecond * 50)
 		for _, neighbour := range getNeighbors(curPos, level) {
 			if !visitedMap[neighbour] {
 				bfsQ.Put(neighbour)
-				level.DebugMap[Pos{neighbour.X, neighbour.Y}] = true
+				// level.DebugMap[Pos{neighbour.X, neighbour.Y}] = true
 			}
 		}
 

@@ -127,13 +127,12 @@ func CreateRenderer(width, height int32) (SpriteRendererV2, error) {
 
 func (r *SpriteRendererV2) Bind() {
 	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, r.frameBuff)
-	gl.Enable(gl.DEPTH_TEST)
+	// gl.Enable(gl.DEPTH_TEST)
 }
 
 func (r *SpriteRendererV2) UnBind() {
-
-	gl.Disable(gl.DEPTH_TEST)
 	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
+	// gl.Disable(gl.DEPTH_TEST)
 }
 func (r *SpriteRendererV2) CopyDraw(obj Drawable, shader *Shader) {
 	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, r.frameBuff)
@@ -146,7 +145,7 @@ func (r *SpriteRendererV2) CopyDraw(obj Drawable, shader *Shader) {
 }
 
 func (r *SpriteRendererV2) Clear() {
-	gl.ClearColor(0.1, 0.1, 0.1, 1)
+	gl.ClearColor(0.1, 0.9, 0.1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
@@ -158,6 +157,8 @@ func (r *SpriteRendererV2) Present() {
 	gl.BindVertexArray(0)
 	gl.BindTexture(gl.TEXTURE_2D, 0)
 	r.screenShader.Unuse()
+
+	// glfw.GetCurrentContext().SwapBuffers()
 }
 
 func (r *SpriteRendererV2) Draw(

@@ -22,4 +22,5 @@ type Renderer interface {
 	Bind()
 	Present()
 	UnBind()
+	Clear()
 }
