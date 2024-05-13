@@ -145,7 +145,7 @@ func (r *SpriteRendererV2) CopyDraw(obj Drawable, shader *Shader) {
 }
 
 func (r *SpriteRendererV2) Clear() {
-	gl.ClearColor(0.1, 0.9, 0.1, 1)
+	gl.ClearColor(0.2, 0.5, 0.1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
