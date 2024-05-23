@@ -7,6 +7,8 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
+var gTimer engine.Timer
+
 const WIDTH = 800
 const HEIGHT = 600
 
@@ -45,6 +47,7 @@ func (c *camera) GetCenter() mgl32.Vec2 {
 }
 
 var cam camera = camera{}
+var traversalVis Bfs
 
 type Game struct {
 	Player       Player
@@ -63,8 +66,11 @@ func (g *Game) loadTexture(key, path string) error {
 }
 
 func (g *Game) Update(window *glfw.Window, in *engine.Input) {
+	gTimer.Update()
 	glfw.PollEvents()
 	g.Player.Update(in, &g.CurrentLevel)
+
+	traversalVis.Update(&g.CurrentLevel)
 	// cam.MoveTo(g.Player.Position)
 	// fmt.Println(cam)
 	cam.Update(&g.Player)
@@ -103,13 +109,20 @@ func (g *Game) Start(in *engine.Input) {
 
 	// gl.DrawBuffer(gl.FRONT)
 
+	traversalVis = CreateBfs(
+		Pos{int32(g.Player.Position[0]), int32(g.Player.Position[1])},
+	)
 }
 
 func (g *Game) Draw(window *glfw.Window, sr engine.Renderer, shader *engine.Shader) {
 	sr.Bind()
 	sr.Clear()
+
+	// draw start
 	g.CurrentLevel.Draw(sr, shader)
 	g.Player.Draw(sr, shader, &g.CurrentLevel)
+	traversalVis.Draw(sr, shader)
+
 	sr.DebugDraw(shader, float32(WIDTH/2)-16, float32(HEIGHT/2)-16, 16, 16, engine.COLOR_BLACK)
 	sr.UnBind()
 	sr.Present()

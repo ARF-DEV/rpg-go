@@ -11,6 +11,8 @@ var (
 	COLOR_BLACK mgl32.Vec4 = mgl32.Vec4{0, 0, 0, 1}
 	COLOR_WHITE mgl32.Vec4 = mgl32.Vec4{1, 1, 1, 1}
 	COLOR_GREEN mgl32.Vec4 = mgl32.Vec4{0, 1, 0, 1}
+	COLOR_BLUE  mgl32.Vec4 = mgl32.Vec4{0, 0, 1, 1}
+	COLOR_RED   mgl32.Vec4 = mgl32.Vec4{1, 0, 0, 1}
 )
 
 var DebugSpriteRenderer SpriteRendererV2
@@ -208,7 +210,7 @@ func (r *SpriteRendererV2) Draw(
 }
 
 func (r *SpriteRendererV2) DebugDraw(shader *Shader, x, y float32, sizeX, sizeY float32, color mgl32.Vec4) {
-	translate := mgl32.Translate3D(x-sizeX/2, y-sizeY/2, 1)
+	translate := mgl32.Translate3D(x, y, 1)
 	scale := mgl32.Scale3D(sizeX, sizeY, 1)
 	model := translate.Mul4(scale)
 
