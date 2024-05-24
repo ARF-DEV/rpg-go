@@ -59,7 +59,6 @@ func (bfs *Bfs) Update(lvl *Level) {
 
 	if bfs.time > 1 {
 		fmt.Println(bfs.q.Len())
-		bfs.time = 0
 		if !bfs.started {
 			bfs.q.Put(bfs.start)
 			bfs.started = true
@@ -74,6 +73,7 @@ func (bfs *Bfs) Update(lvl *Level) {
 					}
 				}
 				bfs.pVisited = curPos
+				bfs.time = 0
 			}
 		}
 	}
