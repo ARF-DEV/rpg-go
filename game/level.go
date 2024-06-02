@@ -15,6 +15,13 @@ type Pos struct {
 	X, Y int32
 }
 
+func (p Pos) GetX() int32 {
+	return p.X
+}
+func (p Pos) GetY() int32 {
+	return p.Y
+}
+
 type Level struct {
 	Map          [][]engine.Tile
 	textureAtlas *engine.Texture

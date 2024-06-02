@@ -7,9 +7,18 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-// type Node interface {
-// 	GetNeighbors() B
-// }
+type Traversable interface {
+	GetX() int32
+	GetY() int32
+	comparable
+}
+
+type PriorityPoint struct {
+	Pos
+	Value int32
+	Step  int32
+	Prev  *PriorityPoint
+}
 
 type Queue[T any] struct {
 	values []T
@@ -33,59 +42,46 @@ func (q *Queue[T]) Len() int {
 	return len(q.values)
 }
 
-type Bfs struct {
-	q     Queue[Pos]
-	start Pos
-	// end        Pos
+type TileTraversalViz[T Traversable] struct {
+	q          Queue[T]
+	start      Pos
+	end        Pos
 	time       float64
 	visitedMap map[Pos]bool
 	started    bool
-	pVisited   Pos
+	pVisited   T
+	uFunc      func(trav *TileTraversalViz[T], lvl *Level)
+	hasReach   bool
+	FinalPath  []Pos
 }
 
-func CreateBfs(start Pos) Bfs {
-	return Bfs{
-		q:          Queue[Pos]{},
+func CreateTileTravViz[T Traversable](start Pos, end Pos, uFunc func(trav *TileTraversalViz[T], lvl *Level)) TileTraversalViz[T] {
+	return TileTraversalViz[T]{
+		q:          Queue[T]{},
 		start:      start,
+		end:        end,
 		time:       0,
 		visitedMap: map[Pos]bool{},
+		uFunc:      uFunc,
+		hasReach:   false,
 	}
 }
 
-func (bfs *Bfs) Update(lvl *Level) {
-	if bfs.visitedMap == nil {
-		bfs.visitedMap = map[Pos]bool{}
-	}
-
-	if bfs.time > 1 {
-		fmt.Println(bfs.q.Len())
-		if !bfs.started {
-			bfs.q.Put(bfs.start)
-			bfs.started = true
-		}
-		if bfs.q.Len() > 0 {
-			curPos := bfs.q.Pop()
-			if !bfs.visitedMap[curPos] {
-				bfs.visitedMap[curPos] = true
-				for _, neighbour := range getNeighbors(curPos, lvl) {
-					if !bfs.visitedMap[neighbour] {
-						bfs.q.Put(neighbour)
-					}
-				}
-				bfs.pVisited = curPos
-				bfs.time = 0
-			}
-		}
-	}
-
-	bfs.time += gTimer.DeltaTime
+func (bfs *TileTraversalViz[T]) Update(lvl *Level) {
+	bfs.uFunc(bfs, lvl)
 }
 
-func (bfs *Bfs) Draw(renderer engine.Renderer, shader *engine.Shader) {
-	fmt.Println(len(bfs.visitedMap))
+func (bfs *TileTraversalViz[T]) Draw(renderer engine.Renderer, shader *engine.Shader) {
+	// fmt.Println(len(bfs.visitedMap))
 	for pos, _ := range bfs.visitedMap {
-		renderer.DebugDraw(shader, float32(engine.TILE_SIZE*uint32(int32(-cam[0])+pos.X)), float32(engine.TILE_SIZE*uint32(int32(-cam[1])+pos.Y)), float32(engine.TILE_SIZE), float32(engine.TILE_SIZE), mgl32.Vec4{1, 0, 0, 1})
+		renderer.DebugDraw(shader, float32(engine.TILE_SIZE*uint32(int32(-cam[0])+pos.GetX())), float32(engine.TILE_SIZE*uint32(int32(-cam[1])+pos.GetY())), float32(engine.TILE_SIZE), float32(engine.TILE_SIZE), mgl32.Vec4{1, 0, 0, 1})
 	}
-	renderer.DebugDraw(shader, float32(engine.TILE_SIZE*uint32(int32(-cam[0])+bfs.pVisited.X)), float32(engine.TILE_SIZE*uint32(int32(-cam[1])+bfs.pVisited.Y)), float32(engine.TILE_SIZE), float32(engine.TILE_SIZE), engine.COLOR_BLUE)
+	renderer.DebugDraw(shader, float32(engine.TILE_SIZE*uint32(int32(-cam[0])+bfs.pVisited.GetX())), float32(engine.TILE_SIZE*uint32(int32(-cam[1])+bfs.pVisited.GetY())), float32(engine.TILE_SIZE), float32(engine.TILE_SIZE), engine.COLOR_BLUE)
+
+	if bfs.hasReach {
+		for _, pos := range bfs.FinalPath {
+			renderer.DebugDraw(shader, float32(engine.TILE_SIZE*uint32(int32(-cam[0])+pos.GetX())), float32(engine.TILE_SIZE*uint32(int32(-cam[1])+pos.GetY())), float32(engine.TILE_SIZE), float32(engine.TILE_SIZE), engine.COLOR_GREEN)
+		}
+	}
 	fmt.Println(bfs.q.values)
 }
