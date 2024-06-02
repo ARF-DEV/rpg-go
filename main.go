@@ -55,8 +55,12 @@ func main() {
 	}
 	gl.Viewport(0, 0, game.WIDTH, game.HEIGHT)
 
-	sr := engine.CreateSpriteRenderer()
-	shader, err := engine.CreateShader("assets/vertex.glsl", "assets/fragment.glsl")
+	// sr := engine.CreateSpriteRenderer()
+	sr, err := engine.CreateRenderer(game.WIDTH, game.HEIGHT)
+	if err != nil {
+		panic(err)
+	}
+	shader, err := engine.CreateShader("assets/vertex.glsl", "assets/fragment.glsl", "default")
 	if err != nil {
 		panic(err)
 	}
@@ -73,6 +77,9 @@ func main() {
 	for !window.ShouldClose() {
 		gameInstance.Update(window, &engine.InputEvent)
 		gameInstance.Draw(window, &sr, &shader)
+		if err := gl.GetError(); err != 0 {
+			panic(err)
+		}
 	}
 
 	// window.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {})

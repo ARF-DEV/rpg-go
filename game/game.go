@@ -1,11 +1,17 @@
 package game
 
 import (
+	"fmt"
+	"math"
+	"sort"
+
 	"github.com/ARF-DEV/rpg-go/engine"
 	"github.com/go-gl/gl/v4.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 )
+
+var gTimer engine.Timer
 
 const WIDTH = 800
 const HEIGHT = 600
@@ -45,6 +51,8 @@ func (c *camera) GetCenter() mgl32.Vec2 {
 }
 
 var cam camera = camera{}
+var traversalVis TileTraversalViz[Pos]
+var aStarTravVis TileTraversalViz[PriorityPoint]
 
 type Game struct {
 	Player       Player
@@ -63,8 +71,13 @@ func (g *Game) loadTexture(key, path string) error {
 }
 
 func (g *Game) Update(window *glfw.Window, in *engine.Input) {
+	gTimer.Update()
 	glfw.PollEvents()
-	g.Player.Update(in)
+	g.Player.Update(in, &g.CurrentLevel)
+
+	// traversalVis.Update(&g.CurrentLevel)
+	aStarTravVis.Update(&g.CurrentLevel)
+
 	// cam.MoveTo(g.Player.Position)
 	// fmt.Println(cam)
 	cam.Update(&g.Player)
@@ -72,6 +85,7 @@ func (g *Game) Update(window *glfw.Window, in *engine.Input) {
 
 func (g *Game) UpdateOnInput(in *engine.Input) {
 	g.Player.UpdateOnInput(in, &g.CurrentLevel)
+
 }
 
 func (g *Game) init() {
@@ -100,15 +114,120 @@ func (g *Game) Start(in *engine.Input) {
 	}
 	in.AddSubcsriber(g)
 
+	// gl.DrawBuffer(gl.FRONT)
+
+	traversalVis = CreateTileTravViz(
+		Pos{int32(g.Player.Position[0]), int32(g.Player.Position[1])},
+		Pos{},
+		func(trav *TileTraversalViz[Pos], lvl *Level) {
+			if trav.visitedMap == nil {
+				trav.visitedMap = map[Pos]bool{}
+			}
+
+			if trav.time > 1 {
+				fmt.Println(trav.q.Len())
+				if !trav.started {
+					trav.q.Put(trav.start)
+					trav.started = true
+				}
+				if trav.q.Len() > 0 {
+					curPos := trav.q.Pop()
+					if !trav.visitedMap[curPos] {
+						trav.visitedMap[curPos] = true
+						for _, neighbour := range getNeighbors(curPos, lvl) {
+							if !trav.visitedMap[neighbour] {
+								trav.q.Put(neighbour)
+							}
+						}
+						trav.pVisited = curPos
+						trav.time = 0
+					}
+				}
+			}
+			trav.time += gTimer.DeltaTime
+		},
+	)
+
+	aStarTravVis = CreateTileTravViz[PriorityPoint](
+		Pos{int32(14), int32(2)},
+		Pos{int32(g.Player.Position[0]), int32(g.Player.Position[1])},
+		func(trav *TileTraversalViz[PriorityPoint], lvl *Level) {
+			if trav.visitedMap == nil {
+				trav.visitedMap = map[Pos]bool{}
+			}
+
+			if trav.hasReach {
+				for pos := trav.pVisited.Prev; pos != nil; pos = pos.Prev {
+					trav.FinalPath = append(trav.FinalPath, pos.Pos)
+				}
+			}
+			if trav.time > 0.2 {
+				// fmt.Println(trav.q.Len())
+				if !trav.started {
+					start := PriorityPoint{
+						trav.start,
+						0,
+						0,
+						nil,
+					}
+					trav.q.Put(start)
+					trav.started = true
+				}
+				if trav.q.Len() > 0 && !trav.hasReach {
+					// fmt.Println(trav.q.values)
+					sort.Slice(trav.q.values, func(i, j int) bool {
+						return trav.q.values[i].Value < trav.q.values[j].Value
+					})
+					fmt.Println(trav.q.values)
+					curPos := trav.q.Pop()
+					if curPos.Pos == trav.end {
+						trav.pVisited = curPos
+						trav.hasReach = true
+
+					}
+					if !trav.visitedMap[curPos.Pos] {
+						trav.visitedMap[curPos.Pos] = true
+						for _, neighbour := range getNeighbors(curPos.Pos, lvl) {
+							if !trav.visitedMap[neighbour] {
+								diffY := int32(math.Abs(float64(trav.end.Y) - float64(neighbour.Y)))
+								diffX := int32(math.Abs(float64(trav.end.X) - float64(neighbour.X)))
+								fmt.Println(diffX)
+								fmt.Println(diffY)
+								fmt.Println(int32(math.Sqrt(float64(diffX)*float64(diffX) + float64(diffY)*float64(diffY))))
+								newPriorityPoint := PriorityPoint{
+									neighbour,
+									(curPos.Step + 1) + diffX + diffY,
+									curPos.Step + 1,
+									&curPos,
+								}
+								// fmt.Println(newPriorityPoint)
+								trav.q.Put(newPriorityPoint)
+							}
+						}
+						trav.pVisited = curPos
+						trav.time = 0
+					}
+				}
+			}
+			trav.time += gTimer.DeltaTime
+
+		},
+	)
 }
 
-func (g *Game) Draw(window *glfw.Window, sr *engine.SpriteRenderer, shader *engine.Shader) {
+func (g *Game) Draw(window *glfw.Window, sr engine.Renderer, shader *engine.Shader) {
+	sr.Bind()
+	sr.Clear()
+
+	// draw start
 	g.CurrentLevel.Draw(sr, shader)
-	g.Player.Draw(sr, shader)
+	g.Player.Draw(sr, shader, &g.CurrentLevel)
+	// traversalVis.Draw(sr, shader)
+	aStarTravVis.Draw(sr, shader)
+
 	sr.DebugDraw(shader, float32(WIDTH/2)-16, float32(HEIGHT/2)-16, 16, 16, engine.COLOR_BLACK)
+	sr.UnBind()
+	sr.Present()
 
 	window.SwapBuffers()
-
-	gl.ClearColor(0.2, 0.5, 0.1, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
 }
