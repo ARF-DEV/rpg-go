@@ -8,11 +8,16 @@ import (
 )
 
 var (
-	COLOR_BLACK mgl32.Vec4 = mgl32.Vec4{0, 0, 0, 1}
-	COLOR_WHITE mgl32.Vec4 = mgl32.Vec4{1, 1, 1, 1}
-	COLOR_GREEN mgl32.Vec4 = mgl32.Vec4{0, 1, 0, 1}
-	COLOR_BLUE  mgl32.Vec4 = mgl32.Vec4{0, 0, 1, 1}
-	COLOR_RED   mgl32.Vec4 = mgl32.Vec4{1, 0, 0, 1}
+	COLOR_BLACK       mgl32.Vec4 = mgl32.Vec4{0, 0, 0, 1}
+	COLOR_WHITE       mgl32.Vec4 = mgl32.Vec4{1, 1, 1, 1}
+	COLOR_GREEN       mgl32.Vec4 = mgl32.Vec4{0, 1, 0, 1}
+	COLOR_BLUE        mgl32.Vec4 = mgl32.Vec4{0, 0, 1, 1}
+	COLOR_RED         mgl32.Vec4 = mgl32.Vec4{1, 0, 0, 1}
+	COLOR_BLACK_FADED mgl32.Vec4 = mgl32.Vec4{0, 0, 0, 0.5}
+	COLOR_WHITE_FADED mgl32.Vec4 = mgl32.Vec4{1, 1, 1, 0.5}
+	COLOR_GREEN_FADED mgl32.Vec4 = mgl32.Vec4{0, 1, 0, 0.5}
+	COLOR_BLUE_FADED  mgl32.Vec4 = mgl32.Vec4{0, 0, 1, 0.5}
+	COLOR_RED_FADED   mgl32.Vec4 = mgl32.Vec4{1, 0, 0, 0.5}
 )
 
 var DebugSpriteRenderer SpriteRendererV2
