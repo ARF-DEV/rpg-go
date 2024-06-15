@@ -1,10 +1,7 @@
 package game
 
 import (
-	"fmt"
-
 	"github.com/ARF-DEV/rpg-go/engine"
-	"github.com/go-gl/mathgl/mgl32"
 )
 
 type Traversable interface {
@@ -42,6 +39,7 @@ func (q *Queue[T]) Len() int {
 	return len(q.values)
 }
 
+type TileTraversalFunc[T Traversable] func(trav *TileTraversalViz[T], lvl *Level)
 type TileTraversalViz[T Traversable] struct {
 	q          Queue[T]
 	start      Pos
@@ -50,7 +48,7 @@ type TileTraversalViz[T Traversable] struct {
 	visitedMap map[Pos]bool
 	started    bool
 	pVisited   T
-	uFunc      func(trav *TileTraversalViz[T], lvl *Level)
+	uFunc      TileTraversalFunc[T]
 	hasReach   bool
 	FinalPath  []Pos
 }
@@ -74,14 +72,40 @@ func (bfs *TileTraversalViz[T]) Update(lvl *Level) {
 func (bfs *TileTraversalViz[T]) Draw(renderer engine.Renderer, shader *engine.Shader) {
 	// fmt.Println(len(bfs.visitedMap))
 	for pos, _ := range bfs.visitedMap {
-		renderer.DebugDraw(shader, float32(engine.TILE_SIZE*uint32(int32(-cam[0])+pos.GetX())), float32(engine.TILE_SIZE*uint32(int32(-cam[1])+pos.GetY())), float32(engine.TILE_SIZE), float32(engine.TILE_SIZE), mgl32.Vec4{1, 0, 0, 1})
+		renderer.DebugDraw(shader, float32(engine.TILE_SIZE*uint32(int32(-cam[0])+pos.GetX())), float32(engine.TILE_SIZE*uint32(int32(-cam[1])+pos.GetY())), float32(engine.TILE_SIZE), float32(engine.TILE_SIZE), engine.COLOR_RED_FADED)
 	}
 	renderer.DebugDraw(shader, float32(engine.TILE_SIZE*uint32(int32(-cam[0])+bfs.pVisited.GetX())), float32(engine.TILE_SIZE*uint32(int32(-cam[1])+bfs.pVisited.GetY())), float32(engine.TILE_SIZE), float32(engine.TILE_SIZE), engine.COLOR_BLUE)
 
 	if bfs.hasReach {
 		for _, pos := range bfs.FinalPath {
-			renderer.DebugDraw(shader, float32(engine.TILE_SIZE*uint32(int32(-cam[0])+pos.GetX())), float32(engine.TILE_SIZE*uint32(int32(-cam[1])+pos.GetY())), float32(engine.TILE_SIZE), float32(engine.TILE_SIZE), engine.COLOR_GREEN)
+			renderer.DebugDraw(shader, float32(engine.TILE_SIZE*uint32(int32(-cam[0])+pos.GetX())), float32(engine.TILE_SIZE*uint32(int32(-cam[1])+pos.GetY())), float32(engine.TILE_SIZE), float32(engine.TILE_SIZE), engine.COLOR_WHITE_FADED)
 		}
 	}
-	fmt.Println(bfs.q.values)
+	// fmt.Println(bfs.q.values)
+}
+
+type PathFindingSearchFunc[T Traversable] func(p *PathFinding[T], lvl *Level, start, goal Pos) []Pos
+type PathFinding[T Traversable] struct {
+	visitedMap  map[Pos]bool
+	searchQueue Queue[T]
+	searchFunc  PathFindingSearchFunc[T]
+}
+
+func CreatePathFinding[T Traversable](searchFunc PathFindingSearchFunc[T]) PathFinding[T] {
+	return PathFinding[T]{
+		searchFunc:  searchFunc,
+		visitedMap:  map[Pos]bool{},
+		searchQueue: Queue[T]{},
+	}
+}
+
+func (p *PathFinding[T]) reset() {
+	p.visitedMap = map[Pos]bool{}
+	p.searchQueue = Queue[T]{}
+
+}
+
+func (p *PathFinding[T]) FindPath(lvl *Level, start Pos, goal Pos) []Pos {
+	p.reset()
+	return p.searchFunc(p, lvl, start, goal)
 }

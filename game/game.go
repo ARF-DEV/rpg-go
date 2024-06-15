@@ -1,6 +1,7 @@
 package game
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"sort"
@@ -53,6 +54,8 @@ func (c *camera) GetCenter() mgl32.Vec2 {
 var cam camera = camera{}
 var traversalVis TileTraversalViz[Pos]
 var aStarTravVis TileTraversalViz[PriorityPoint]
+var aPathFinding PathFinding[PriorityPoint]
+var path []Pos = []Pos{}
 
 type Game struct {
 	Player       Player
@@ -86,6 +89,16 @@ func (g *Game) Update(window *glfw.Window, in *engine.Input) {
 func (g *Game) UpdateOnInput(in *engine.Input) {
 	g.Player.UpdateOnInput(in, &g.CurrentLevel)
 
+	if !in.Keys[glfw.KeySpace] && in.PrevKeys[glfw.KeySpace] {
+		path = aPathFinding.FindPath(&g.CurrentLevel,
+			Pos{int32(14), int32(2)},
+			Pos{int32(g.Player.Position[0]), int32(g.Player.Position[1])})
+		jsonStr, err := json.MarshalIndent(path, "", "\t")
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(string(jsonStr))
+	}
 }
 
 func (g *Game) init() {
@@ -125,7 +138,7 @@ func (g *Game) Start(in *engine.Input) {
 			}
 
 			if trav.time > 1 {
-				fmt.Println(trav.q.Len())
+				// fmt.Println(trav.q.Len())
 				if !trav.started {
 					trav.q.Put(trav.start)
 					trav.started = true
@@ -148,6 +161,48 @@ func (g *Game) Start(in *engine.Input) {
 		},
 	)
 
+	aPathFinding = CreatePathFinding[PriorityPoint](func(p *PathFinding[PriorityPoint], lvl *Level, start, goal Pos) []Pos {
+		p.searchQueue.Put(PriorityPoint{
+			Pos:   start,
+			Prev:  nil,
+			Step:  0,
+			Value: 0,
+		})
+		for p.searchQueue.Len() > 0 {
+			sort.Slice(p.searchQueue.values, func(i, j int) bool {
+				return p.searchQueue.values[i].Value < p.searchQueue.values[j].Value
+			})
+			curPoint := p.searchQueue.Pop()
+			if curPoint.Pos == goal {
+				path := []Pos{}
+				for posPointer := curPoint; posPointer.Prev != nil; posPointer = *posPointer.Prev {
+					path = append(path, posPointer.Pos)
+				}
+
+				for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+					path[i], path[j] = path[j], path[i]
+				}
+				return path
+			}
+			if !p.visitedMap[curPoint.Pos] {
+				for _, neighbor := range getNeighbors(curPoint.Pos, lvl) {
+					xDiff := int32(math.Abs(float64(goal.X) - float64(neighbor.X)))
+					yDiff := int32(math.Abs(float64(goal.Y) - float64(neighbor.Y)))
+					neighborPoint := PriorityPoint{
+						Pos:   neighbor,
+						Prev:  &curPoint,
+						Step:  curPoint.Step + 1,
+						Value: curPoint.Step + xDiff + yDiff,
+					}
+					p.searchQueue.Put(neighborPoint)
+				}
+				p.visitedMap[curPoint.Pos] = true
+			}
+
+		}
+		return []Pos{}
+	})
+
 	aStarTravVis = CreateTileTravViz[PriorityPoint](
 		Pos{int32(14), int32(2)},
 		Pos{int32(g.Player.Position[0]), int32(g.Player.Position[1])},
@@ -162,7 +217,6 @@ func (g *Game) Start(in *engine.Input) {
 				}
 			}
 			if trav.time > 0.2 {
-				// fmt.Println(trav.q.Len())
 				if !trav.started {
 					start := PriorityPoint{
 						trav.start,
@@ -174,11 +228,9 @@ func (g *Game) Start(in *engine.Input) {
 					trav.started = true
 				}
 				if trav.q.Len() > 0 && !trav.hasReach {
-					// fmt.Println(trav.q.values)
 					sort.Slice(trav.q.values, func(i, j int) bool {
 						return trav.q.values[i].Value < trav.q.values[j].Value
 					})
-					fmt.Println(trav.q.values)
 					curPos := trav.q.Pop()
 					if curPos.Pos == trav.end {
 						trav.pVisited = curPos
@@ -191,16 +243,12 @@ func (g *Game) Start(in *engine.Input) {
 							if !trav.visitedMap[neighbour] {
 								diffY := int32(math.Abs(float64(trav.end.Y) - float64(neighbour.Y)))
 								diffX := int32(math.Abs(float64(trav.end.X) - float64(neighbour.X)))
-								fmt.Println(diffX)
-								fmt.Println(diffY)
-								fmt.Println(int32(math.Sqrt(float64(diffX)*float64(diffX) + float64(diffY)*float64(diffY))))
 								newPriorityPoint := PriorityPoint{
 									neighbour,
 									(curPos.Step + 1) + diffX + diffY,
 									curPos.Step + 1,
 									&curPos,
 								}
-								// fmt.Println(newPriorityPoint)
 								trav.q.Put(newPriorityPoint)
 							}
 						}
@@ -225,6 +273,9 @@ func (g *Game) Draw(window *glfw.Window, sr engine.Renderer, shader *engine.Shad
 	// traversalVis.Draw(sr, shader)
 	aStarTravVis.Draw(sr, shader)
 
+	for _, pos := range path {
+		sr.DebugDraw(shader, float32(engine.TILE_SIZE*uint32(int32(-cam[0])+pos.GetX())), float32(engine.TILE_SIZE*uint32(int32(-cam[1])+pos.GetY())), float32(engine.TILE_SIZE), float32(engine.TILE_SIZE), engine.COLOR_BLUE_FADED)
+	}
 	sr.DebugDraw(shader, float32(WIDTH/2)-16, float32(HEIGHT/2)-16, 16, 16, engine.COLOR_BLACK)
 	sr.UnBind()
 	sr.Present()
