@@ -10,11 +10,10 @@ type Traversable interface {
 	comparable
 }
 
-type PriorityPoint struct {
+type TravTile struct {
 	Pos
-	Value int32
-	Step  int32
-	Prev  *PriorityPoint
+	Step int32
+	Prev *TravTile
 }
 
 type Queue[T any] struct {
@@ -41,7 +40,7 @@ func (q *Queue[T]) Len() int {
 
 type TileTraversalFunc[T Traversable] func(trav *TileTraversalViz[T], lvl *Level)
 type TileTraversalViz[T Traversable] struct {
-	q          Queue[T]
+	q          PrioQueue[T]
 	start      Pos
 	end        Pos
 	time       float64
@@ -55,7 +54,7 @@ type TileTraversalViz[T Traversable] struct {
 
 func CreateTileTravViz[T Traversable](start Pos, end Pos, uFunc func(trav *TileTraversalViz[T], lvl *Level)) TileTraversalViz[T] {
 	return TileTraversalViz[T]{
-		q:          Queue[T]{},
+		q:          NewPriorityQueue[T](MinPriority),
 		start:      start,
 		end:        end,
 		time:       0,
@@ -87,7 +86,7 @@ func (bfs *TileTraversalViz[T]) Draw(renderer engine.Renderer, shader *engine.Sh
 type PathFindingSearchFunc[T Traversable] func(p *PathFinding[T], lvl *Level, start, goal Pos) []Pos
 type PathFinding[T Traversable] struct {
 	visitedMap  map[Pos]bool
-	searchQueue Queue[T]
+	searchQueue PrioQueue[T]
 	searchFunc  PathFindingSearchFunc[T]
 }
 
@@ -95,14 +94,13 @@ func CreatePathFinding[T Traversable](searchFunc PathFindingSearchFunc[T]) PathF
 	return PathFinding[T]{
 		searchFunc:  searchFunc,
 		visitedMap:  map[Pos]bool{},
-		searchQueue: Queue[T]{},
+		searchQueue: NewPriorityQueue[T](MinPriority),
 	}
 }
 
 func (p *PathFinding[T]) reset() {
 	p.visitedMap = map[Pos]bool{}
-	p.searchQueue = Queue[T]{}
-
+	p.searchQueue = NewPriorityQueue[T](MinPriority)
 }
 
 func (p *PathFinding[T]) FindPath(lvl *Level, start Pos, goal Pos) []Pos {

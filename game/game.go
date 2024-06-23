@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"sort"
 
 	"github.com/ARF-DEV/rpg-go/engine"
 	"github.com/go-gl/gl/v4.3-core/gl"
@@ -53,8 +52,8 @@ func (c *camera) GetCenter() mgl32.Vec2 {
 
 var cam camera = camera{}
 var traversalVis TileTraversalViz[Pos]
-var aStarTravVis TileTraversalViz[PriorityPoint]
-var aPathFinding PathFinding[PriorityPoint]
+var aStarTravVis TileTraversalViz[TravTile]
+var aPathFinding PathFinding[TravTile]
 var path []Pos = []Pos{}
 
 type Game struct {
@@ -127,22 +126,6 @@ func (g *Game) Start(in *engine.Input) {
 	}
 	in.AddSubcsriber(g)
 
-	// gl.DrawBuffer(gl.FRONT)
-	pq := NewPriorityQueue[int](func(first, second pqItem[int]) bool {
-		return first.Pv < second.Pv
-	})
-	pq.Push(1, 1)
-	pq.Push(5, 5)
-	pq.Push(10, 10)
-	pq.Push(11, 32)
-	pq.Push(2, 12)
-	fmt.Println("WODKWODK")
-
-	// fmt.Println(pq)
-	fmt.Println(pq.Pop(), pq)
-	fmt.Println(pq.Pop(), pq)
-	fmt.Println(pq.Pop(), pq)
-
 	traversalVis = CreateTileTravViz(
 		Pos{int32(g.Player.Position[0]), int32(g.Player.Position[1])},
 		Pos{},
@@ -154,7 +137,7 @@ func (g *Game) Start(in *engine.Input) {
 			if trav.time > 1 {
 				// fmt.Println(trav.q.Len())
 				if !trav.started {
-					trav.q.Put(trav.start)
+					trav.q.Put(trav.start, 0)
 					trav.started = true
 				}
 				if trav.q.Len() > 0 {
@@ -163,7 +146,7 @@ func (g *Game) Start(in *engine.Input) {
 						trav.visitedMap[curPos] = true
 						for _, neighbour := range getNeighbors(curPos, lvl) {
 							if !trav.visitedMap[neighbour] {
-								trav.q.Put(neighbour)
+								trav.q.Put(neighbour, 0)
 							}
 						}
 						trav.pVisited = curPos
@@ -175,17 +158,13 @@ func (g *Game) Start(in *engine.Input) {
 		},
 	)
 
-	aPathFinding = CreatePathFinding[PriorityPoint](func(p *PathFinding[PriorityPoint], lvl *Level, start, goal Pos) []Pos {
-		p.searchQueue.Put(PriorityPoint{
-			Pos:   start,
-			Prev:  nil,
-			Step:  0,
-			Value: 0,
-		})
+	aPathFinding = CreatePathFinding[TravTile](func(p *PathFinding[TravTile], lvl *Level, start, goal Pos) []Pos {
+		p.searchQueue.Put(TravTile{
+			Pos:  start,
+			Prev: nil,
+			Step: 0,
+		}, 0)
 		for p.searchQueue.Len() > 0 {
-			sort.Slice(p.searchQueue.values, func(i, j int) bool {
-				return p.searchQueue.values[i].Value < p.searchQueue.values[j].Value
-			})
 			curPoint := p.searchQueue.Pop()
 			if curPoint.Pos == goal {
 				path := []Pos{}
@@ -202,13 +181,13 @@ func (g *Game) Start(in *engine.Input) {
 				for _, neighbor := range getNeighbors(curPoint.Pos, lvl) {
 					xDiff := int32(math.Abs(float64(goal.X) - float64(neighbor.X)))
 					yDiff := int32(math.Abs(float64(goal.Y) - float64(neighbor.Y)))
-					neighborPoint := PriorityPoint{
-						Pos:   neighbor,
-						Prev:  &curPoint,
-						Step:  curPoint.Step + 1,
-						Value: curPoint.Step + xDiff + yDiff,
+					neighborPoint := TravTile{
+						Pos:  neighbor,
+						Prev: &curPoint,
+						Step: curPoint.Step + 1,
+						// Value: curPoint.Step + xDiff + yDiff,
 					}
-					p.searchQueue.Put(neighborPoint)
+					p.searchQueue.Put(neighborPoint, curPoint.Step+xDiff+yDiff)
 				}
 				p.visitedMap[curPoint.Pos] = true
 			}
@@ -217,10 +196,10 @@ func (g *Game) Start(in *engine.Input) {
 		return []Pos{}
 	})
 
-	aStarTravVis = CreateTileTravViz[PriorityPoint](
+	aStarTravVis = CreateTileTravViz[TravTile](
 		Pos{int32(14), int32(2)},
 		Pos{int32(g.Player.Position[0]), int32(g.Player.Position[1])},
-		func(trav *TileTraversalViz[PriorityPoint], lvl *Level) {
+		func(trav *TileTraversalViz[TravTile], lvl *Level) {
 			if trav.visitedMap == nil {
 				trav.visitedMap = map[Pos]bool{}
 			}
@@ -232,19 +211,15 @@ func (g *Game) Start(in *engine.Input) {
 			}
 			if trav.time > 0.2 {
 				if !trav.started {
-					start := PriorityPoint{
+					start := TravTile{
 						trav.start,
-						0,
 						0,
 						nil,
 					}
-					trav.q.Put(start)
+					trav.q.Put(start, 0)
 					trav.started = true
 				}
 				if trav.q.Len() > 0 && !trav.hasReach {
-					sort.Slice(trav.q.values, func(i, j int) bool {
-						return trav.q.values[i].Value < trav.q.values[j].Value
-					})
 					curPos := trav.q.Pop()
 					if curPos.Pos == trav.end {
 						trav.pVisited = curPos
@@ -257,13 +232,13 @@ func (g *Game) Start(in *engine.Input) {
 							if !trav.visitedMap[neighbour] {
 								diffY := int32(math.Abs(float64(trav.end.Y) - float64(neighbour.Y)))
 								diffX := int32(math.Abs(float64(trav.end.X) - float64(neighbour.X)))
-								newPriorityPoint := PriorityPoint{
+								newPriorityPoint := TravTile{
 									neighbour,
-									(curPos.Step + 1) + diffX + diffY,
+									// (curPos.Step + 1) + diffX + diffY,
 									curPos.Step + 1,
 									&curPos,
 								}
-								trav.q.Put(newPriorityPoint)
+								trav.q.Put(newPriorityPoint, (curPos.Step+1)+diffX+diffY)
 							}
 						}
 						trav.pVisited = curPos
