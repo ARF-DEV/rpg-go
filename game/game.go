@@ -128,6 +128,20 @@ func (g *Game) Start(in *engine.Input) {
 	in.AddSubcsriber(g)
 
 	// gl.DrawBuffer(gl.FRONT)
+	pq := NewPriorityQueue[int](func(first, second pqItem[int]) bool {
+		return first.Pv < second.Pv
+	})
+	pq.Push(1, 1)
+	pq.Push(5, 5)
+	pq.Push(10, 10)
+	pq.Push(11, 32)
+	pq.Push(2, 12)
+	fmt.Println("WODKWODK")
+
+	// fmt.Println(pq)
+	fmt.Println(pq.Pop(), pq)
+	fmt.Println(pq.Pop(), pq)
+	fmt.Println(pq.Pop(), pq)
 
 	traversalVis = CreateTileTravViz(
 		Pos{int32(g.Player.Position[0]), int32(g.Player.Position[1])},
