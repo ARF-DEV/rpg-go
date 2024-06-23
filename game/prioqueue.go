@@ -1,11 +1,14 @@
 package game
 
-import (
-	"encoding/json"
-	"fmt"
-)
-
 type prioQueueLessFunc[T any] func(first, second pqItem[T]) bool
+
+func MinPriority[T any](first, second pqItem[T]) bool {
+	return first.Pv < second.Pv
+}
+
+func MaxPriority[T any](first, second pqItem[T]) bool {
+	return first.Pv > second.Pv
+}
 
 // TODO move to engine
 type PrioQueue[T any] struct {
@@ -24,7 +27,7 @@ func NewPriorityQueue[T any](less prioQueueLessFunc[T]) PrioQueue[T] {
 // Push
 // parent func
 
-func (p *PrioQueue[T]) Push(val T, priorityValue int32) {
+func (p *PrioQueue[T]) Put(val T, priorityValue int32) {
 
 	p.q = append(p.q, pqItem[T]{
 		Data: val,
@@ -67,10 +70,7 @@ func (p *PrioQueue[T]) Pop() T {
 		if !p.isLeft(curIdx) && !p.isRight(curIdx) {
 			break
 		}
-		fmt.Println(curIdx)
 		swapCandidateIdx := curIdx
-		// fmt.Println(p.isLeft(curIdx), p.less(p.q[curIdx], p.left(curIdx)), p.q[curIdx].Pv, p.left(curIdx).Pv)
-		// fmt.Println(p.isRight(curIdx), p.less(p.q[curIdx], p.right(curIdx), p.q[curIdx].Pv, p.right(curIdx).Pv)
 		if p.isLeft(curIdx) && p.less(p.left(curIdx), p.q[curIdx]) {
 			if p.isRight(curIdx) && p.less(p.right(curIdx), p.left(curIdx)) {
 				swapCandidateIdx = curIdx*2 + 2
@@ -117,9 +117,13 @@ func (p *PrioQueue[T]) left(idx int) pqItem[T] {
 	return p.q[lcIdx]
 }
 
-func (p PrioQueue[T]) String() string {
-	b, _ := json.MarshalIndent(p.q, "", "\t")
-	return string(b)
+// func (p PrioQueue[T]) String() string {
+// 	b, _ := json.MarshalIndent(p.q, "", "\t")
+// 	return string(b)
+// }
+
+func (p PrioQueue[T]) Len() int {
+	return len(p.q)
 }
 
 type pqItem[T any] struct {
