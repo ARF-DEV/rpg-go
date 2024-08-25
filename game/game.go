@@ -52,8 +52,8 @@ func (c *camera) GetCenter() mgl32.Vec2 {
 
 var cam camera = camera{}
 var traversalVis TileTraversalViz[Pos]
-var aStarTravVis TileTraversalViz[TravTile]
-var aPathFinding PathFinding[TravTile]
+var aStarTravVis TileTraversalViz[TravTile[Pos]]
+var aPathFinding PathFinding[TravTile[Pos]]
 var path []Pos = []Pos{}
 
 type Game struct {
@@ -158,18 +158,18 @@ func (g *Game) Start(in *engine.Input) {
 		},
 	)
 
-	aPathFinding = CreatePathFinding[TravTile](func(p *PathFinding[TravTile], lvl *Level, start, goal Pos) []Pos {
-		p.searchQueue.Put(TravTile{
-			Pos:  start,
+	aPathFinding = CreatePathFinding[TravTile[Pos]](func(p *PathFinding[TravTile[Pos]], lvl *Level, start, goal Pos) []Pos {
+		p.searchQueue.Put(TravTile[Pos]{
+			Val:  start,
 			Prev: nil,
 			Step: 0,
 		}, 0)
 		for p.searchQueue.Len() > 0 {
 			curPoint := p.searchQueue.Pop()
-			if curPoint.Pos == goal {
+			if curPoint.Val == goal {
 				path := []Pos{}
 				for posPointer := curPoint; posPointer.Prev != nil; posPointer = *posPointer.Prev {
-					path = append(path, posPointer.Pos)
+					path = append(path, posPointer.Val)
 				}
 
 				for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
@@ -177,41 +177,41 @@ func (g *Game) Start(in *engine.Input) {
 				}
 				return path
 			}
-			if !p.visitedMap[curPoint.Pos] {
-				for _, neighbor := range getNeighbors(curPoint.Pos, lvl) {
+			if !p.visitedMap[curPoint.Val] {
+				for _, neighbor := range getNeighbors(curPoint.Val, lvl) {
 					xDiff := int32(math.Abs(float64(goal.X) - float64(neighbor.X)))
 					yDiff := int32(math.Abs(float64(goal.Y) - float64(neighbor.Y)))
-					neighborPoint := TravTile{
-						Pos:  neighbor,
+					neighborPoint := TravTile[Pos]{
+						Val:  neighbor,
 						Prev: &curPoint,
 						Step: curPoint.Step + 1,
 						// Value: curPoint.Step + xDiff + yDiff,
 					}
 					p.searchQueue.Put(neighborPoint, curPoint.Step+xDiff+yDiff)
 				}
-				p.visitedMap[curPoint.Pos] = true
+				p.visitedMap[curPoint.Val] = true
 			}
 
 		}
 		return []Pos{}
 	})
 
-	aStarTravVis = CreateTileTravViz[TravTile](
+	aStarTravVis = CreateTileTravViz[TravTile[Pos]](
 		Pos{int32(14), int32(2)},
 		Pos{int32(g.Player.Position[0]), int32(g.Player.Position[1])},
-		func(trav *TileTraversalViz[TravTile], lvl *Level) {
+		func(trav *TileTraversalViz[TravTile[Pos]], lvl *Level) {
 			if trav.visitedMap == nil {
 				trav.visitedMap = map[Pos]bool{}
 			}
 
 			if trav.hasReach {
 				for pos := trav.pVisited.Prev; pos != nil; pos = pos.Prev {
-					trav.FinalPath = append(trav.FinalPath, pos.Pos)
+					trav.FinalPath = append(trav.FinalPath, pos.Val)
 				}
 			}
 			if trav.time > 0.2 {
 				if !trav.started {
-					start := TravTile{
+					start := TravTile[Pos]{
 						trav.start,
 						0,
 						nil,
@@ -221,18 +221,18 @@ func (g *Game) Start(in *engine.Input) {
 				}
 				if trav.q.Len() > 0 && !trav.hasReach {
 					curPos := trav.q.Pop()
-					if curPos.Pos == trav.end {
+					if curPos.Val == trav.end {
 						trav.pVisited = curPos
 						trav.hasReach = true
 
 					}
-					if !trav.visitedMap[curPos.Pos] {
-						trav.visitedMap[curPos.Pos] = true
-						for _, neighbour := range getNeighbors(curPos.Pos, lvl) {
+					if !trav.visitedMap[curPos.Val] {
+						trav.visitedMap[curPos.Val] = true
+						for _, neighbour := range getNeighbors(curPos.Val, lvl) {
 							if !trav.visitedMap[neighbour] {
 								diffY := int32(math.Abs(float64(trav.end.Y) - float64(neighbour.Y)))
 								diffX := int32(math.Abs(float64(trav.end.X) - float64(neighbour.X)))
-								newPriorityPoint := TravTile{
+								newPriorityPoint := TravTile[Pos]{
 									neighbour,
 									// (curPos.Step + 1) + diffX + diffY,
 									curPos.Step + 1,

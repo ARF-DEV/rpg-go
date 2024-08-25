@@ -10,10 +10,17 @@ type Traversable interface {
 	comparable
 }
 
-type TravTile struct {
-	Pos
+type TravTile[T Traversable] struct {
+	Val  T
 	Step int32
-	Prev *TravTile
+	Prev *TravTile[T]
+}
+
+func (v TravTile[T]) GetX() int32 {
+	return v.Val.GetX()
+}
+func (v TravTile[T]) GetY() int32 {
+	return v.Val.GetY()
 }
 
 type Queue[T any] struct {
