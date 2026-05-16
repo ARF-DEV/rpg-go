@@ -1,8 +1,6 @@
 package game
 
 import (
-	"fmt"
-
 	"github.com/ARF-DEV/rpg-go/engine"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl32"
@@ -57,7 +55,7 @@ func (p *Player) UpdateOnInput(in *engine.Input, lvl *Level) {
 		front := p.Position.Add(p.prevDir)
 		frontTile := lvl.GetTile(int(front[0]), int(front[1]))
 
-		fmt.Println(p.prevDir, p.Position, *frontTile, front)
+		// fmt.Println(p.prevDir, p.Position, *frontTile, front)
 		if frontTile.IsInteractable() {
 			frontTile.Interact()
 		}
@@ -75,7 +73,7 @@ func (p *Player) UpdateOnInput(in *engine.Input, lvl *Level) {
 
 func (p *Player) moveTo(lvl *Level, pos mgl32.Vec2) {
 	p.prevDir = pos.Sub(p.Position)
-	fmt.Println(p.Position, pos, p.prevDir)
+	// fmt.Println(p.Position, pos, p.prevDir)
 	if lvl.GetTile(int(pos[0]), int(pos[1])).CanWalk() {
 		p.Position = pos
 	}
