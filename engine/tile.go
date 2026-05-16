@@ -63,15 +63,6 @@ func InitTextureIndex(file string, texture *Texture) error {
 	if err != nil {
 		return err
 	}
-
-	// imgF, err := os.Open(file)
-	// if err != nil {
-	// 	return err
-	// }
-	// img, _, err := image.Decode(imgF)
-	// if err != nil {
-	// 	return err
-	// }
 	img := texture.TexBound
 
 	textureIndex = map[Tile][]image.Rectangle{}
@@ -83,8 +74,6 @@ func InitTextureIndex(file string, texture *Texture) error {
 		texCoords := []image.Rectangle{}
 		identifiers, coords := splits[0], splits[1]
 		coordsArr := strings.Split(coords, ",")
-
-		fmt.Println(identifiers, coordsArr)
 
 		xStart, err := strconv.Atoi(string(coordsArr[0]))
 		if err != nil {
