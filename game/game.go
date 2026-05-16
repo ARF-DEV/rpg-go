@@ -77,7 +77,7 @@ func (g *Game) Update(window *glfw.Window, in *engine.Input) {
 	glfw.PollEvents()
 	g.Player.Update(in, &g.CurrentLevel)
 
-	// traversalVis.Update(&g.CurrentLevel)
+	traversalVis.Update(&g.CurrentLevel)
 	aStarTravVis.Update(&g.CurrentLevel)
 
 	// cam.MoveTo(g.Player.Position)
@@ -158,7 +158,7 @@ func (g *Game) Start(in *engine.Input) {
 		},
 	)
 
-	aPathFinding = CreatePathFinding[TravTile](func(p *PathFinding[TravTile], lvl *Level, start, goal Pos) []Pos {
+	aPathFinding = CreatePathFinding(func(p *PathFinding[TravTile], lvl *Level, start, goal Pos) []Pos {
 		p.searchQueue.Put(TravTile{
 			Pos:  start,
 			Prev: nil,
@@ -196,7 +196,7 @@ func (g *Game) Start(in *engine.Input) {
 		return []Pos{}
 	})
 
-	aStarTravVis = CreateTileTravViz[TravTile](
+	aStarTravVis = CreateTileTravViz(
 		Pos{int32(14), int32(2)},
 		Pos{int32(g.Player.Position[0]), int32(g.Player.Position[1])},
 		func(trav *TileTraversalViz[TravTile], lvl *Level) {
@@ -259,7 +259,7 @@ func (g *Game) Draw(window *glfw.Window, sr engine.Renderer, shader *engine.Shad
 	// draw start
 	g.CurrentLevel.Draw(sr, shader)
 	g.Player.Draw(sr, shader, &g.CurrentLevel)
-	// traversalVis.Draw(sr, shader)
+	traversalVis.Draw(sr, shader)
 	aStarTravVis.Draw(sr, shader)
 
 	for _, pos := range path {
