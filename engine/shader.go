@@ -83,8 +83,10 @@ func loadShader(path string, shaderType uint32) (shaderID, error) {
 	if err != nil {
 		return 0, fmt.Errorf("failed to read shader file: %v", err)
 	}
+	fmt.Printf("--- FILE START (%d bytes) ---\n%s\n--- FILE END ---\n", len(source), string(source))
 
-	cSrc, free := gl.Strs(string(source))
+	src := string(source) + "\x00"
+	cSrc, free := gl.Strs(src)
 	defer free()
 
 	shader := gl.CreateShader(shaderType)
