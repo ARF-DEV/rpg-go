@@ -100,6 +100,8 @@ rpg-go/
 
 If all of these improvements were implemented, I'd create a new demo alongside it — probably a stress test rendering 1000+ animated tiles to show the performance difference.
 
+*Note: Parts of this README, `plan.md`, and `handover.md` were drafted with assistance from an AI coding assistant (opencode). All technical content has been reviewed to ensure accuracy.*
+
 ## License
 
 MIT
