@@ -20,3 +20,8 @@
 
 # Go workspace file
 go.work
+
+# AI related files
+task.md
+handover.md
+plan.md
