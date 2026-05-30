@@ -36,6 +36,9 @@ RPG-Go is a 2D game engine built for tile-based role-playing games. It renders s
 git clone https://github.com/ARF-DEV/rpg-go.git
 cd rpg-go
 
+# Download dependencies and tidy module files
+go mod tidy
+
 # Build
 go build
 
