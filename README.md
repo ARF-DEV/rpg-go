@@ -90,6 +90,16 @@ rpg-go/
 - [github.com/go-gl/mathgl](https://github.com/go-gl/mathgl) — Math types (`mgl32.Vec2`, `Mat4`, etc.)
 - [golang.org/x/image](https://golang.org/x/image) — Image decoding (PNG/JPEG)
 
+## Planned Improvements
+
+- **Goroutine-based render loop** — Decouple game update and render logic into separate goroutines for better parallelism and smoother frame pacing.
+- **Batch rendering** — Batch tiles and sprites into fewer draw calls (instanced rendering or vertex buffer batching) to reduce GPU overhead.
+- **Fixed timestep game loop** — Decouple update rate from frame rate for deterministic behavior.
+- **Proper error handling** — Replace panics with returned errors in shader/texture loading.
+- **Configuration system** — Externalize window size, tile size, clear color, and other constants.
+
+If all of these improvements were implemented, I'd create a new demo alongside it — probably a stress test rendering 1000+ animated tiles to show the performance difference.
+
 ## License
 
 MIT
